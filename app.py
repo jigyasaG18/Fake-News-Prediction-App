@@ -2,8 +2,8 @@ import streamlit as st
 import joblib
 
 # Load the trained model and vectorizer
-model = joblib.load('models/trained_model.sav')
-vectorizer = joblib.load('models/tfidf_vectorizer.pkl')
+model = joblib.load('trained_model.sav')
+vectorizer = joblib.load('tfidf_vectorizer.pkl')
 
 # Title for the web app
 st.title("Fake News Detection")
