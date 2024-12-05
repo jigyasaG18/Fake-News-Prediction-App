@@ -1,72 +1,57 @@
-import numpy as np
-import pandas as pd
-import re
 import streamlit as st
+import pandas as pd
+import numpy as np
+import re
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+import joblib
 import nltk
 
-# Ensure NLTK stopwords are downloaded
 nltk.download('stopwords')
 
-# Initialize the PorterStemmer
-port_stem = PorterStemmer()
+# Title of the app
+st.title('Fake News Detection App')
 
-# Load the dataset
-@st.cache(allow_output_mutation=True)
-def load_data():
-    news_dataset = pd.read_csv(r'C:\Users\Jigyasa\Desktop\Project\dataset\train.csv' , encoding='unicode_escape')
+# File uploader for CSV
+uploaded_file = st.file_uploader("Choose a CSV file containing news articles", type="csv")
+if uploaded_file is not None:
+    # Load and process the dataset
+    news_dataset = pd.read_csv(uploaded_file, encoding='unicode_escape')
+  
+    # Data Pre-processing
     news_dataset = news_dataset.fillna('')
     news_dataset['content'] = news_dataset['author'] + ' ' + news_dataset['title']
-    return news_dataset
+    
+    # Stemming function
+    port_stem = PorterStemmer()
+    
+    def stemming(content):
+        stemmed_content = re.sub('[^a-zA-Z]', ' ', content)
+        stemmed_content = stemmed_content.lower()
+        stemmed_content = stemmed_content.split()
+        stemmed_content = [port_stem.stem(word) for word in stemmed_content if not word in stopwords.words('english')]
+        return ' '.join(stemmed_content)
 
-# Stemming function
-def stemming(content):
-    stemmed_content = re.sub('[^a-zA-Z]', ' ', content)
-    stemmed_content = stemmed_content.lower()
-    stemmed_content = stemmed_content.split()
-    stemmed_content = [port_stem.stem(word) for word in stemmed_content if not word in stopwords.words('english')]
-    return ' '.join(stemmed_content)
+    news_dataset['content'] = news_dataset['content'].apply(stemming)
 
-# Load and preprocess the data
-news_dataset = load_data()
-news_dataset['content'] = news_dataset['content'].apply(stemming)
-X = news_dataset['content'].values
-Y = news_dataset['label'].values
+    # Load the trained model and vectorizer
+    model = joblib.load('fake_news_detection_model.sav')
+    vectorizer = joblib.load('tfidf_vectorizer.pkl')
 
-# Convert the textual data to numerical data
-vectorizer = TfidfVectorizer()
-X = vectorizer.fit_transform(X)
+    # Input for prediction
+    st.subheader("News Content")
+    if st.text_area("Enter news content for prediction:"):
+        input_content = st.text_area("Enter news content:")
+        input_content_stemmed = stemming(input_content)
+        input_vector = vectorizer.transform([input_content_stemmed])
 
-# Splitting the dataset into training & test data
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, stratify=Y, random_state=2)
-
-# Training the model
-model = LogisticRegression()
-model.fit(X_train, Y_train)
-
-# Streamlit UI
-st.title("Fake News Classification")
-st.subheader("Enter a News Article Below:")
-
-input_text = st.text_area("Article Text", "")
-if st.button("Predict"):
-    if input_text:
-        # Preprocess the input text
-        input_stemmed = stemming(input_text)
-        input_vectorized = vectorizer.transform([input_stemmed])
-        
         # Make prediction
-        prediction = model.predict(input_vectorized)
-        
-        # Display the result
+        prediction = model.predict(input_vector)
+
         if prediction[0] == 0:
-            st.write("The news is Real")
+            st.write('The news is Real')
         else:
-            st.write("The news is Fake")
-    else:
-        st.write("Please enter a news article.")
+            st.write('The news is Fake')
+            
