@@ -1,3 +1,6 @@
+import streamlit as st
+import joblib
+
 # Load the trained model and vectorizer
 model = joblib.load('trained_model.sav')
 vectorizer = joblib.load('tfidf_vectorizer.pkl')
@@ -9,28 +12,20 @@ st.title("Fake News Detection")
 title = st.text_input("Enter the title of the news article")
 author = st.text_input("Enter the author of the news article")
 content = st.text_area("Enter the content of the news article")
+
 # Button to make predictions
 if st.button("Check News"):
     # Merge author, title, and content for the prediction
     full_text = f"{author} {title} {content}"
-    
-    # (Optional) Debug: Print the full text being analyzed
-    print("Full Text for Prediction:", full_text)
 
     # Transform the input using the vectorizer
     vectorized_text = vectorizer.transform([full_text])
-    
-    # (Optional) Debug: Print the vectorized text
-    print("Vectorized Text Shape:", vectorized_text.shape)
-    
+
     # Make prediction using the model
     prediction = model.predict(vectorized_text)
-    
-    # (Optional) Debug: Print the actual prediction
-    print("Prediction Output:", prediction)
 
     # Display the prediction result
     if prediction[0] == 0:
-        st.success("The news is Real")
+        st.success("The news is Fake")
     else:
-        st.error("The news is Fake")
+        st.error("The news is Real")
