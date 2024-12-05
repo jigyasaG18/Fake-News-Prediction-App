@@ -26,6 +26,6 @@ if st.button("Check News"):
 
     # Display the prediction result
     if prediction[0] == 0:
-        st.success("The news is Fake")
+        st.success("The news is Real")
     else:
-        st.error("The news is Real")
+        st.error("The news is Fake")
