@@ -25,7 +25,7 @@ if st.button("Check News"):
     prediction = model.predict(vectorized_text)
 
     # Display the prediction result
- if prediction[0] == 0
+    if prediction[0] == 0:
         st.success("The news is Real")
     else:
         st.error("The news is Fake")
