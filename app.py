@@ -1,7 +1,8 @@
 import streamlit as st
 import joblib
 import re
-from nltk.corpus import stopwords
+import nltk
+from nltk.corpus import stopword
 from nltk.stem import WordNetLemmatizer
 
 # Load the trained model and vectorizer
