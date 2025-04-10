@@ -1,8 +1,13 @@
 import streamlit as st
 import joblib
 import re
+import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+
+# Download necessary NLTK data (only runs the first time)
+nltk.download('stopwords')
+nltk.download('wordnet')
 
 # Load the trained model and vectorizer
 model = joblib.load('random_forest_model.sav')
