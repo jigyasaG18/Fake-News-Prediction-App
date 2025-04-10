@@ -5,21 +5,30 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
-# Download the stopwords data if it's not already downloaded
-try:
-    stop_words = set(stopwords.words('english'))
-except LookupError:
-    nltk.download('stopwords')
-    stop_words = set(stopwords.words('english'))
+# Function to download required nltk datasets
+def download_nltk_data():
+    try:
+        stopwords.words('english')  # Attempt to load stopwords
+    except LookupError:
+        nltk.download('stopwords')
 
-# Load the trained model and vectorizer
-model = joblib.load('random_forest_model.sav')
-vectorizer = joblib.load('tfidf_vectorizer.pkl')
+    try:
+        WordNetLemmatizer()  # Attempt to create a lemmatizer
+    except LookupError:
+        nltk.download('wordnet')
 
-# Initialize the WordNetLemmatizer
+# Download NLTK data
+download_nltk_data()
+
+# Initialize stop words and lemmatizer
+stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
-# Function for preprocessing the input text
+# Load the trained model and vectorizer (make sure these files exist)
+model = joblib.load('random_forest_model.sav')  # Update with your model file path
+vectorizer = joblib.load('tfidf_vectorizer.pkl')  # Update with your vectorizer file path
+
+# Function to preprocess the input text
 def preprocess_input(content):
     # Remove non-alphabetic characters and convert to lower case
     content = re.sub('[^a-zA-Z]', ' ', content)
@@ -30,59 +39,28 @@ def preprocess_input(content):
     content = [lemmatizer.lemmatize(word) for word in content if word not in stop_words]
     return ' '.join(content)
 
-# Set a nice style for the app
-st.set_page_config(page_title="Fake News Detection", page_icon="📰", layout="wide")
+# Title of the Streamlit app
+st.title("Fake News Prediction")
 
-# Title for the web app
-st.title("📰 Fake News Detection App")
+# User input for news article
+full_text = st.text_area("Enter the news article text here:")
 
-# Input fields for the title, author, and content of the news article
-st.header("Input Article Details")
-title = st.text_input("**Enter the title of the news article**", placeholder="Title")
-author = st.text_input("**Enter the author of the news article**", placeholder="Author")
-content = st.text_area("**Enter the content of the news article**", placeholder="Content")
-
-# Button to make predictions
-if st.button("Check News", key="check_news"):
-    # Merge author, title, and content for the prediction
-    full_text = f"{author} {title} {content}"
-    
-    # Preprocess the combined text
-    processed_text = preprocess_input(full_text)
-
-    # Transform the input using the same fitted vectorizer
-    vectorized_text = vectorizer.transform([processed_text])  # Make sure to pass a list
-
-    # Make prediction using the model
-    prediction = model.predict(vectorized_text)
-
-    # Display the prediction result with custom colors
-    if prediction[0] == 0:
-        st.success("✨ **The news is Real!** 😃", icon="✅")
+# Button to make prediction
+if st.button("Predict"):
+    if full_text:
+        # Preprocess the input text
+        processed_text = preprocess_input(full_text)
+        
+        # Vectorize the processed text
+        X = vectorizer.transform([processed_text])
+        
+        # Make the prediction
+        prediction = model.predict(X)
+        
+        # Display the prediction result
+        if prediction[0] == 1:
+            st.write("The news article is predicted to be **FAKE**.")
+        else:
+            st.write("The news article is predicted to be **REAL**.")
     else:
-        st.error("🚫 **The news is Fake!** 😱", icon="❌")
-
-# Sidebar for additional information about the app
-st.sidebar.title("About the App")
-
-# Create a selection box to view various information
-app_info = st.sidebar.selectbox("Select Information", ["Overview", "How it Works", "Use Cases"])
-
-# Display information based on the user's selection
-if app_info == "Overview":
-    st.sidebar.markdown("""
-    This application leverages machine learning algorithms to detect the authenticity of news articles.
-    By analyzing the text provided by the user, it concludes whether the news is real or fake.
-    """)
-elif app_info == "How it Works":
-    st.sidebar.markdown("""
-    The app processes user input by removing noise and applying text preprocessing techniques 
-    such as lemmatization and stop word removal. The cleaned text is then vectorized using TF-IDF 
-    and passed into a pre-trained model to make predictions.
-    """)
-elif app_info == "Use Cases":
-    st.sidebar.markdown("""
-    - **Journalists** can use the app to verify the authenticity of news articles.
-    - **Students** can benefit from it while researching news sources for projects.
-    - **General users** can check news articles to improve their media literacy.
-    """)
+        st.write("Please enter some text to analyze.")
