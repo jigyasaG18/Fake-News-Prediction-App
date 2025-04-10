@@ -1,16 +1,23 @@
 import streamlit as st
 import joblib
 import re
+import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+
+# Download the stopwords data if it's not already downloaded
+try:
+    stop_words = set(stopwords.words('english'))
+except LookupError:
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('english'))
 
 # Load the trained model and vectorizer
 model = joblib.load('random_forest_model.sav')
 vectorizer = joblib.load('tfidf_vectorizer.pkl')
 
-# Initialize the WordNetLemmatizer and stopwords
+# Initialize the WordNetLemmatizer
 lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words('english'))
 
 # Function for preprocessing the input text
 def preprocess_input(content):
